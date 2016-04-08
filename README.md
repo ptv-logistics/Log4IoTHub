@@ -6,7 +6,7 @@ Azure IoT Hub appender for log4net... sending messages to the Azure IoT Hub by H
 - **https://www.nuget.org/packages/Log4IoTHub/**
 - Add package to your project `Install-Package Log4IoTHub`
 
-## Simple CLog4IoTHub Example
+## Simple Log4IoTHub Example
 
 This example is also available as a [LoggerTests.cs](https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/LoggerTests.cs):
 
@@ -61,7 +61,7 @@ This configuration is also available as a [App.config](https://github.com/ptv-lo
 </configuration>
 ```
 
-### Example Log2Net Configuration file
+### Example Log4Net Configuration file
 
 This configuration is also available as a [log4net.config](https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/log4net.config):
 
