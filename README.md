@@ -88,12 +88,14 @@ This configuration is also available as a [log4net.config](https://github.com/pt
 
     <!-- 
     optional debug setting which should only be used during development or on testsystem.
-    Set logMessageToFile=true to inspect your messages (in log4IoTHub_info.log) which will be sent to the Azure IoT Hub.
+    Set logMessageToFile=true to inspect your messages (in log4IoTHub_info.log) which will 
+    be sent to the Azure IoT Hub.
     -->
     <!--<logMessageToFile value="true"/>-->
     
     <!-- 
-    optional name of an logger defined further down with an depending appender e.g. logentries to log internal errors. If the value is empty or the property isn't defined 
+    optional name of an logger defined further down with an depending appender e.g. 
+    logentries to log internal errors. If the value is empty or the property isn't defined 
     errors will only be logged to log4IoTHub_error.log
     -->
     <!--<errLoggerName value="Log4IoTHubErrors2LogentriesLogger"/>-->
