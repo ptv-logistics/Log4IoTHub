@@ -2,7 +2,7 @@
 
 Azure IoT Hub appender for log4net... sending messages to the Azure IoT Hub by HttpWebRequest to avoid Service Bus SDK dependencies.
 
-### Use the nuget package 
+## Use the nuget package 
 - **https://www.nuget.org/packages/Log4IoTHub/**
 - Add package to your project `Install-Package Log4IoTHub`
 
@@ -38,7 +38,7 @@ namespace Log4IoTHubTest
 
 ```
 
-### Example App Configuration file
+## Example App Configuration file
 
 This configuration is also available as a [App.config](https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/App.config):
 
@@ -61,7 +61,7 @@ This configuration is also available as a [App.config](https://github.com/ptv-lo
 </configuration>
 ```
 
-### Example Log4Net Configuration file
+## Example Log4Net Configuration file
 
 This configuration is also available as a [log4net.config](https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/log4net.config):
 
