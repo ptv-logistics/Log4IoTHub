@@ -70,33 +70,13 @@ namespace Log4IoTHub
 
         public void IoTHubRequestAsync(string jsonRequest)
         {
-            createTokenIfExpired(iotHubURI(), instance._deviceKey);
 
             try
             {
-                byte[] data = encoding.GetBytes(jsonRequest);
 
+                HttpWebRequest myHttpWebRequest = DoHttpWebRequest(jsonRequest);
 
-                HttpWebRequest _myHttpWebRequest = (HttpWebRequest)HttpWebRequest.Create(iotHubURL());
-                _myHttpWebRequest.Method = "POST";
-
-                if (!string.IsNullOrWhiteSpace(_proxyHost))
-                {
-                    _myHttpWebRequest.Proxy = new WebProxy(_proxyHost, _proxyPort ?? 80);
-                }
-                _myHttpWebRequest.Headers.Add("Authorization", instance._sasToken);
-                _myHttpWebRequest.ContentType = "application/json";
-
-
-
-                _myHttpWebRequest.ContentLength = data.Length;
-
-                using (Stream requestStream = _myHttpWebRequest.GetRequestStream())
-                {
-                    requestStream.Write(data, 0, data.Length);
-                }
-
-                _myHttpWebRequest.GetResponseAsync().ContinueWith((t) => RetrySendMessage2IoTHubAync(t, _myHttpWebRequest, data, iotHubURI, instance._deviceKey));
+                myHttpWebRequest.GetResponseAsync().ContinueWith((t) => RetrySendMessage2IoTHubAync(t, jsonRequest, iotHubURI, instance._deviceKey));
 
             }
             catch (WebException e)
@@ -105,7 +85,50 @@ namespace Log4IoTHub
             }
         }
 
-        private void RetrySendMessage2IoTHubAync(Task<WebResponse> t, HttpWebRequest _myHttpWebRequest, byte[] data, Func<string> iotHubURI, string _deviceKey, int connectRetries = 0, int rootDelay = MinDelay)
+        private HttpWebRequest DoHttpWebRequest(string jsonRequest)
+        {
+
+            HttpWebRequest myHttpWebRequest;
+            byte[] data;
+
+            CreateTokenIfExpired(iotHubURI(), instance._deviceKey);
+
+            data = encoding.GetBytes(jsonRequest);
+
+            myHttpWebRequest = (HttpWebRequest)HttpWebRequest.Create(iotHubURL());
+            myHttpWebRequest.Method = "POST";
+
+            if (!string.IsNullOrWhiteSpace(_proxyHost))
+            {
+                myHttpWebRequest.Proxy = new WebProxy(_proxyHost, _proxyPort ?? 80);
+            }
+            myHttpWebRequest.Headers.Add("Authorization", instance._sasToken);
+            myHttpWebRequest.ContentType = "application/json";
+            myHttpWebRequest.ContinueTimeout = 10000;
+            myHttpWebRequest.Timeout = 10000;
+            myHttpWebRequest.ReadWriteTimeout = 10000;
+
+
+            myHttpWebRequest.ContentLength = data.Length;
+
+            try
+            {
+                using (Stream requestStream = myHttpWebRequest.GetRequestStream())
+                {
+                    requestStream.Write(data, 0, data.Length);
+                }
+
+            }
+            catch (WebException e)
+            {
+                Log4IoTHubAppender.Error($"Invalid iotHub url [{iotHubURL()}] - Error [{e.Message}]", false);
+            }
+
+            return myHttpWebRequest;
+
+        }
+
+        private void RetrySendMessage2IoTHubAync(Task<WebResponse> t, string jsonRequest, Func<string> iotHubURI, string _deviceKey, int connectRetries = 0, int rootDelay = MinDelay)
         {
             using (Task<WebResponse> getResponseTask = t)
             {
@@ -119,7 +142,7 @@ namespace Log4IoTHub
                         {
                             if (connectRetries <= 5)
                             {
-                                Retry(t, _myHttpWebRequest, data, iotHubURI, connectRetries, rootDelay );
+                                Retry(t, jsonRequest, iotHubURI, connectRetries, rootDelay);
                             }
                             else
                             {
@@ -127,9 +150,6 @@ namespace Log4IoTHub
                             }
 
                         }
-
-                        Console.WriteLine("Content length is {0}", response.ContentLength);
-                        Console.WriteLine("Content type is {0}", response.ContentType);
 
                         // Use the GetResponseStream to get the content
                         // See http://msdn.microsoft.com/en-us/library/system.net.httpwebrequest.getresponse.aspx
@@ -147,7 +167,7 @@ namespace Log4IoTHub
                 {
                     if (connectRetries <= 5)
                     {
-                        Retry(t, _myHttpWebRequest, data, iotHubURI, connectRetries, rootDelay);
+                        Retry(t, jsonRequest, iotHubURI, connectRetries, rootDelay);
                     }
                     else
                     {
@@ -165,7 +185,7 @@ namespace Log4IoTHub
 
         }
 
-        private void Retry(Task<WebResponse> t, HttpWebRequest _myHttpWebRequest, byte[] data, Func<string> iotHubURI, int connectRetries, int rootDelay)
+        private void Retry(Task<WebResponse> t, string jsonRequest, Func<string> iotHubURI, int connectRetries, int rootDelay)
         {
             try
             {
@@ -183,24 +203,19 @@ namespace Log4IoTHub
                 }
                 connectRetries++;
 
-                Log4IoTHubAppender.Error($"Retry number [{connectRetries}] send Message async because of [{FlattenException(t.Exception, true, true)}]");
+                Log4IoTHubAppender.Error($"Retry number [{connectRetries}] send Message async because of [{t.Exception?.Message}]");
 
-                _myHttpWebRequest.ContentLength = data.Length;
+                HttpWebRequest myHttpWebRequest = DoHttpWebRequest(jsonRequest);
 
-                using (Stream requestStream = _myHttpWebRequest.GetRequestStream())
-                {
-                    requestStream.Write(data, 0, data.Length);
-                }
-
-                _myHttpWebRequest.GetResponseAsync().ContinueWith((tt) => RetrySendMessage2IoTHubAync(tt, _myHttpWebRequest, data, iotHubURI, instance._deviceKey, connectRetries, rootDelay));
+                myHttpWebRequest.GetResponseAsync().ContinueWith((tt) => RetrySendMessage2IoTHubAync(tt, jsonRequest, iotHubURI, instance._deviceKey, connectRetries, rootDelay));
             }
             catch (Exception ee)
             {
-                Log4IoTHubAppender.Error($"RetrySendMessage2IoTHubAync.Exception: {ee}");
+                Log4IoTHubAppender.Error($"RetrySendMessage2IoTHubAync.Exception: {ee.Message}");
             }
         }
 
-        private static void createTokenIfExpired(string resourceUri, string deviceKey)
+        private static bool CreateTokenIfExpired(string resourceUri, string deviceKey)
         {
             lock (instance._sasToken)
             {
@@ -209,48 +224,30 @@ namespace Log4IoTHub
                 {
                     if (instance._sasToken != null && (int)instance.sinceEpoche().TotalSeconds <= instance._sasTokenExpiry)
                     {
-                        return;
+                        return true;
                     }
+
+                    HMACSHA256 hmac = new HMACSHA256(Convert.FromBase64String(deviceKey));
                     instance._sasTokenExpiry = (int)instance.sinceEpoche().TotalSeconds + VALIDITY_IN_SECONDS;
                     var expiry = Convert.ToString(instance._sasTokenExpiry);
                     string stringToSign = HttpUtility.UrlEncode(resourceUri) + "\n" + expiry;
-                    HMACSHA256 hmac = new HMACSHA256(Convert.FromBase64String(deviceKey));
                     var signature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
                     var sasToken = String.Format(CultureInfo.InvariantCulture, "SharedAccessSignature sr={0}&sig={1}&se={2}", HttpUtility.UrlEncode(resourceUri), HttpUtility.UrlEncode(signature), expiry);
                     instance._sasToken = sasToken;
-
+                    return true;
+                }
+                catch (FormatException e)
+                {
+                    Log4IoTHubAppender.Error($"Error create SASToken - invalid deviceKey [{deviceKey}] - error [{e.Message}]", false);
+                    return false;
                 }
                 catch (Exception e)
                 {
-                    Log4IoTHubAppender.Error($"Error create SASToken {e}");
+                    Log4IoTHubAppender.Error($"Error create SASToken {e.Message}");
+                    return false;
                 }
-
-
             }
         }
 
-        private static string FlattenException(Exception exception, bool logExcType = true, bool isStackTraceIgnored = false)
-        {
-            var stringBuilder = new StringBuilder();
-
-            while (exception != null)
-            {
-
-                if (logExcType)
-                {
-                    stringBuilder.AppendLine(string.Format("ExceptionType:[{0}]", exception.GetType().FullName));
-                }
-                stringBuilder.AppendLine(string.Format("Message:[{0}]", exception.Message));
-
-                if (!isStackTraceIgnored)
-                {
-                    stringBuilder.AppendLine(string.Format("StackTrace:[{0}]", exception.StackTrace));
-                }
-
-                exception = exception.InnerException;
-            }
-
-            return stringBuilder.ToString();
-        }
     }
 }

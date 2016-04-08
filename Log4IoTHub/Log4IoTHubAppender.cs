@@ -70,10 +70,13 @@ namespace Log4IoTHub
         {
             try
             {
-                var content = _serializer.SerializeLoggingEvents(new[] { loggingEvent });
-                Info(content);
-                //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
-                ThreadPool.QueueUserWorkItem(task => _iotHubClient.IoTHubRequestAsync(content));
+                if (_iotHubClient != null)
+                {
+                    var content = _serializer.SerializeLoggingEvents(new[] { loggingEvent });
+                    Info(content);
+                    //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
+                    ThreadPool.QueueUserWorkItem(task => _iotHubClient.IoTHubRequestAsync(content));
+                }
            }
             catch (Exception ex)
             {
@@ -82,12 +85,19 @@ namespace Log4IoTHub
         }
 
 
-        public static void Error(string logMessage)
+        public static void Error(string logMessage, bool async = true)
         {
             if (_logError && _log != null)
             {
-                //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
-                ThreadPool.QueueUserWorkItem(task => _log.Error(logMessage));
+                if (async)
+                {
+                    //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
+                    ThreadPool.QueueUserWorkItem(task => _log.Error(logMessage));
+                }
+                else
+                {
+                    _log.Error(logMessage);
+                }
             }
         }
 
