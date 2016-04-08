@@ -6,7 +6,7 @@ namespace Log4IoTHubTest
     class LoggerTests
     {
 
-        private static ILog iotHubLogger = LogManager.GetLogger(typeof(LoggerTests));
+        private static ILog iotHubLogger = LogManager.GetLogger("Log4IoTHubLogger");
 
         static void Main(string[] args)
         {

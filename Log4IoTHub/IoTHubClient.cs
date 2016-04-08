@@ -20,19 +20,19 @@ namespace Log4IoTHub
     public sealed class IoTHubClient
     {
         private static object _lock = new object();
-        private string _deviceId;
-        private string _deviceKey;
-        private string _apiVersion;
-        private string _iotHubName;
-        private string _proxyHost;
-        private int? _proxyPort;
-        private string _sasToken = string.Empty;
-        private int _sasTokenExpiry;
+        private string deviceId;
+        private string deviceKey;
+        private string apiVersion;
+        private string iotHubName;
+        private string proxyHost;
+        private int? proxyPort;
+        private string sasToken = string.Empty;
+        private int sasTokenExpiry;
         private static UTF8Encoding encoding = new UTF8Encoding();
         private const string PROTOCOLL = "https";
         private const int VALIDITY_IN_SECONDS = 60;
-        private Func<string> iotHubURI = () => $"{instance._iotHubName}/devices/{instance._deviceId}";
-        private Func<string> iotHubURL = () => $"{PROTOCOLL}://{instance.iotHubURI()}/messages/events?api-version={instance._apiVersion}";
+        private Func<string> iotHubURI = () => $"{instance.iotHubName}/devices/{instance.deviceId}";
+        private Func<string> iotHubURL = () => $"{PROTOCOLL}://{instance.iotHubURI()}/messages/events?api-version={instance.apiVersion}";
         private Func<TimeSpan> sinceEpoche = () => DateTime.UtcNow - new DateTime(1970, 1, 1);
         protected static readonly Random Random1 = new Random();
         // Minimal delay between attempts to reconnect in milliseconds. 
@@ -45,7 +45,7 @@ namespace Log4IoTHub
 
         private IoTHubClient() { }
 
-        public static IoTHubClient Instance(string deviceId, string deviceKey, string apiVersion = "2015-08-15-preview", string iotHubName = "ads-common-iothub.azure-devices.net", string proxyHost = null, int? proxyPort = null)
+        public static IoTHubClient Instance(string deviceId, string deviceKey, string apiVersion = "2015-08-15-preview", string iotHubName = null, string proxyHost = null, int? proxyPort = null)
         {
             if (instance == null)
             {
@@ -54,12 +54,12 @@ namespace Log4IoTHub
                     if (instance == null)
                     {
                         instance = new IoTHubClient();
-                        instance._deviceId = deviceId;
-                        instance._deviceKey = deviceKey;
-                        instance._apiVersion = apiVersion;
-                        instance._iotHubName = iotHubName;
-                        instance._proxyHost = proxyHost;
-                        instance._proxyPort = proxyPort;
+                        instance.deviceId = deviceId;
+                        instance.deviceKey = deviceKey;
+                        instance.apiVersion = apiVersion;
+                        instance.iotHubName = iotHubName;
+                        instance.proxyHost = proxyHost;
+                        instance.proxyPort = proxyPort;
                     }
                 }
             }
@@ -76,7 +76,7 @@ namespace Log4IoTHub
 
                 HttpWebRequest myHttpWebRequest = DoHttpWebRequest(jsonRequest);
 
-                myHttpWebRequest.GetResponseAsync().ContinueWith((t) => RetrySendMessage2IoTHubAync(t, jsonRequest, iotHubURI, instance._deviceKey));
+                myHttpWebRequest.GetResponseAsync().ContinueWith((t) => RetrySendMessage2IoTHubAync(t, jsonRequest, iotHubURI, instance.deviceKey));
 
             }
             catch (WebException e)
@@ -91,18 +91,18 @@ namespace Log4IoTHub
             HttpWebRequest myHttpWebRequest;
             byte[] data;
 
-            CreateTokenIfExpired(iotHubURI(), instance._deviceKey);
+            CreateTokenIfExpired(iotHubURI(), instance.deviceKey);
 
             data = encoding.GetBytes(jsonRequest);
 
             myHttpWebRequest = (HttpWebRequest)HttpWebRequest.Create(iotHubURL());
             myHttpWebRequest.Method = "POST";
 
-            if (!string.IsNullOrWhiteSpace(_proxyHost))
+            if (!string.IsNullOrWhiteSpace(proxyHost))
             {
-                myHttpWebRequest.Proxy = new WebProxy(_proxyHost, _proxyPort ?? 80);
+                myHttpWebRequest.Proxy = new WebProxy(proxyHost, proxyPort ?? 80);
             }
-            myHttpWebRequest.Headers.Add("Authorization", instance._sasToken);
+            myHttpWebRequest.Headers.Add("Authorization", instance.sasToken);
             myHttpWebRequest.ContentType = "application/json";
             myHttpWebRequest.ContinueTimeout = 10000;
             myHttpWebRequest.Timeout = 10000;
@@ -207,7 +207,7 @@ namespace Log4IoTHub
 
                 HttpWebRequest myHttpWebRequest = DoHttpWebRequest(jsonRequest);
 
-                myHttpWebRequest.GetResponseAsync().ContinueWith((tt) => RetrySendMessage2IoTHubAync(tt, jsonRequest, iotHubURI, instance._deviceKey, connectRetries, rootDelay));
+                myHttpWebRequest.GetResponseAsync().ContinueWith((tt) => RetrySendMessage2IoTHubAync(tt, jsonRequest, iotHubURI, instance.deviceKey, connectRetries, rootDelay));
             }
             catch (Exception ee)
             {
@@ -217,23 +217,23 @@ namespace Log4IoTHub
 
         private static bool CreateTokenIfExpired(string resourceUri, string deviceKey)
         {
-            lock (instance._sasToken)
+            lock (instance.sasToken)
             {
 
                 try
                 {
-                    if (instance._sasToken != null && (int)instance.sinceEpoche().TotalSeconds <= instance._sasTokenExpiry)
+                    if (instance.sasToken != null && (int)instance.sinceEpoche().TotalSeconds <= instance.sasTokenExpiry)
                     {
                         return true;
                     }
 
                     HMACSHA256 hmac = new HMACSHA256(Convert.FromBase64String(deviceKey));
-                    instance._sasTokenExpiry = (int)instance.sinceEpoche().TotalSeconds + VALIDITY_IN_SECONDS;
-                    var expiry = Convert.ToString(instance._sasTokenExpiry);
+                    instance.sasTokenExpiry = (int)instance.sinceEpoche().TotalSeconds + VALIDITY_IN_SECONDS;
+                    var expiry = Convert.ToString(instance.sasTokenExpiry);
                     string stringToSign = HttpUtility.UrlEncode(resourceUri) + "\n" + expiry;
                     var signature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
                     var sasToken = String.Format(CultureInfo.InvariantCulture, "SharedAccessSignature sr={0}&sig={1}&se={2}", HttpUtility.UrlEncode(resourceUri), HttpUtility.UrlEncode(signature), expiry);
-                    instance._sasToken = sasToken;
+                    instance.sasToken = sasToken;
                     return true;
                 }
                 catch (FormatException e)

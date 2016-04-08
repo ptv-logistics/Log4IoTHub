@@ -7,19 +7,22 @@
 
 using log4net;
 using log4net.Appender;
+using log4net.Config;
 using log4net.Core;
 using System;
+using System.Reflection;
 using System.Threading;
 
 namespace Log4IoTHub
 {
     public class Log4IoTHubAppender : AppenderSkeleton
     {
-        private static ILog _log;
+        private static ILog log;
+        private static ILog extraLog;
 
-        private LoggingEventSerializer _serializer;
+        private LoggingEventSerializer serializer;
 
-        private IoTHubClient _iotHubClient;
+        private IoTHubClient iotHubClient;
 
         public string DeviceId { get; set; }
         public string DeviceKey { get; set; }
@@ -30,14 +33,10 @@ namespace Log4IoTHub
 
         public string MetaDataJson { get; set; }
 
-        private static bool _logError = false;
-        public bool LogError { get; set; }
-
-        private static bool _logMessageToFile = false;
+        private static bool logMessageToFile = false;
         public bool LogMessageToFile { get; set; }
-
-        public string LoggerName { get; set; }
-
+ 
+        public string ErrLoggerName { get; set; }
 
 
         static Log4IoTHubAppender()
@@ -50,19 +49,46 @@ namespace Log4IoTHub
 
             try
             {
-                _log = LogManager.GetLogger(LoggerName);
-                _logError = LogError;
-                _logMessageToFile = LogMessageToFile;
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Log4IoTHub.InternalLog4net.config"))
+                {
+                    XmlConfigurator.Configure(stream);
+                }
 
-                _iotHubClient = IoTHubClient.Instance(DeviceId, DeviceKey, AzureApiVersion, IotHubName, WebProxyHost, WebProxyPort);
-                _serializer = new LoggingEventSerializer
+                log = LogManager.GetLogger("Log4IoTHubInternalLogger");
+
+                if (!string.IsNullOrWhiteSpace(ErrLoggerName))
+                {
+                    extraLog = LogManager.GetLogger(ErrLoggerName);
+                }
+                
+
+                logMessageToFile = LogMessageToFile;
+
+                if (string.IsNullOrWhiteSpace(DeviceId))
+                {
+                    throw new Exception($"the Log4IoTHubAppender property deviceId [{DeviceId}] shouldn't be empty");
+                }
+
+                if (string.IsNullOrWhiteSpace(DeviceKey))
+                {
+                    throw new Exception($"the Log4IoTHubAppender property deviceKey [{DeviceKey}] shouldn't be empty");
+                }
+
+                if (string.IsNullOrWhiteSpace(IotHubName))
+                {
+                    throw new Exception($"the Log4IoTHubAppender property iotHubName [{IotHubName}] shouldn't be empty");
+                }
+
+
+                iotHubClient = IoTHubClient.Instance(DeviceId, DeviceKey, AzureApiVersion, IotHubName, WebProxyHost, WebProxyPort);
+                serializer = new LoggingEventSerializer
                 {
                     MetaDataJson = MetaDataJson
                 };
             }
             catch (Exception ex)
             {
-                Error($"Unable to connect to EventHub: {ex}");
+                Error($"Unable to activate Log4IoTHubAppender: {ex.Message}");
             }
         }
 
@@ -70,12 +96,12 @@ namespace Log4IoTHub
         {
             try
             {
-                if (_iotHubClient != null)
+                if (iotHubClient != null)
                 {
-                    var content = _serializer.SerializeLoggingEvents(new[] { loggingEvent });
+                    var content = serializer.SerializeLoggingEvents(new[] { loggingEvent });
                     Info(content);
                     //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
-                    ThreadPool.QueueUserWorkItem(task => _iotHubClient.IoTHubRequestAsync(content));
+                    ThreadPool.QueueUserWorkItem(task => iotHubClient.IoTHubRequestAsync(content));
                 }
            }
             catch (Exception ex)
@@ -87,26 +113,35 @@ namespace Log4IoTHub
 
         public static void Error(string logMessage, bool async = true)
         {
-            if (_logError && _log != null)
+            if (log != null)
             {
                 if (async)
                 {
                     //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
-                    ThreadPool.QueueUserWorkItem(task => _log.Error(logMessage));
+                    ThreadPool.QueueUserWorkItem(task => log.Error(logMessage));
+                    if (extraLog != null)
+                    {
+                        ThreadPool.QueueUserWorkItem(task => extraLog.Error(logMessage));
+                    }
                 }
                 else
                 {
-                    _log.Error(logMessage);
+                    log.Error(logMessage);
+                    if (extraLog != null)
+                    {
+                        extraLog.Error(logMessage);
+                    }
+
                 }
             }
         }
 
         public static void Info(string logMessage)
         {
-            if (_logMessageToFile && _log != null)
+            if (logMessageToFile && log != null)
             {
                 //http://www.ben-morris.com/using-asynchronous-log4net-appenders-for-high-performance-logging/
-                ThreadPool.QueueUserWorkItem(task => _log.Info(logMessage));
+                ThreadPool.QueueUserWorkItem(task => log.Info(logMessage));
             }
         }
 
