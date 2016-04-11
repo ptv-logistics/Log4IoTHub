@@ -1,6 +1,7 @@
 ﻿### Log4IoTHub
 
-Azure IoT Hub appender for log4net... sending messages to the Azure IoT Hub by HttpWebRequest to avoid Service Bus SDK dependencies.
+Azure IoT Hub appender for log4net... sending messages to the Azure IoT Hub by HttpWebRequest to avoid Service Bus SDK dependencies. The Messages will also be logged/sent
+asynchronously for high performance and to avoid blocking the caller thread.
 
 ## Use the nuget package 
 - **https://www.nuget.org/packages/Log4IoTHub/**
