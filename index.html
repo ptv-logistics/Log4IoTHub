@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Log4iothub : Azure IoT Hub appender for log4net">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Log4iothub</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ptv-logistics/Log4IoTHub">View on GitHub</a>
+
+          <h1 id="project_title">Log4iothub</h1>
+          <h2 id="project_tagline">Azure IoT Hub appender for log4net</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ptv-logistics/Log4IoTHub/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ptv-logistics/Log4IoTHub/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h3>
+<a id="log4iothub" class="anchor" href="#log4iothub" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Log4IoTHub</h3>
+
+<p>Azure IoT Hub appender for log4net... sending messages to the Azure IoT Hub by HttpWebRequest to avoid Service Bus SDK dependencies. The Messages will also be logged/sent
+asynchronously for high performance and to avoid blocking the caller thread.</p>
+
+<h2>
+<a id="use-the-nuget-package" class="anchor" href="#use-the-nuget-package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Use the nuget package</h2>
+
+<ul>
+<li><strong><a href="https://www.nuget.org/packages/Log4IoTHub/">https://www.nuget.org/packages/Log4IoTHub/</a></strong></li>
+<li>Add package to your project <code>Install-Package Log4IoTHub</code>
+</li>
+</ul>
+
+<h2>
+<a id="simple-log4iothub-example" class="anchor" href="#simple-log4iothub-example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Simple Log4IoTHub Example</h2>
+
+<p>This example is also available as a <a href="https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/LoggerTests.cs">LoggerTests.cs</a>:</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">using</span> log4net<span class="pl-k">;</span>
+<span class="pl-k">using</span> System<span class="pl-k">;</span>
+
+<span class="pl-k">namespace</span> <span class="pl-en">Log4IoTHubTest</span>
+{
+    <span class="pl-k">class</span> <span class="pl-en">LoggerTests</span>
+    {
+
+        <span class="pl-k">private</span> <span class="pl-k">static</span> ILog iotHubLogger = LogManager.GetLogger(<span class="pl-s"><span class="pl-pds">"</span>Log4IoTHubLogger<span class="pl-pds">"</span></span>);
+
+        <span class="pl-k">static</span> <span class="pl-k">void</span> <span class="pl-en">Main</span>(<span class="pl-k">string[]</span> <span class="pl-smi">args</span>)
+        {
+
+            <span class="pl-k">for</span> (<span class="pl-k">int</span> i = <span class="pl-c1">0</span>; i &lt; <span class="pl-c1">2000</span>; i++)
+            {
+                iotHubLogger.Info(<span class="pl-k">new</span> { id = $<span class="pl-s"><span class="pl-pds">"</span>mob-{i}<span class="pl-pds">"</span></span>, message = $<span class="pl-s"><span class="pl-pds">"</span>hallo-{i}<span class="pl-pds">"</span></span> });
+
+            }
+
+
+            System.Threading.Thread.Sleep(<span class="pl-k">new</span> TimeSpan(<span class="pl-c1">0</span>, <span class="pl-c1">10</span>, <span class="pl-c1">0</span>));
+        }
+    }
+}
+</pre></div>
+
+<h2>
+<a id="example-app-configuration-file" class="anchor" href="#example-app-configuration-file" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example App Configuration file</h2>
+
+<p>This configuration is also available as a <a href="https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/App.config">App.config</a>:</p>
+
+<div class="highlight highlight-text-xml"><pre>&lt;?<span class="pl-ent">xml</span><span class="pl-e"> version</span>=<span class="pl-s"><span class="pl-pds">"</span>1.0<span class="pl-pds">"</span></span><span class="pl-e"> encoding</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> ?&gt;
+&lt;<span class="pl-ent">configuration</span>&gt;
+  &lt;<span class="pl-ent">startup</span>&gt;
+    &lt;<span class="pl-ent">supportedRuntime</span> <span class="pl-e">version</span>=<span class="pl-s"><span class="pl-pds">"</span>v4.0<span class="pl-pds">"</span></span> <span class="pl-e">sku</span>=<span class="pl-s"><span class="pl-pds">"</span>.NETFramework,Version=v4.5.2<span class="pl-pds">"</span></span> /&gt;
+  &lt;/<span class="pl-ent">startup</span>&gt;
+
+  &lt;<span class="pl-ent">appSettings</span>&gt;
+    <span class="pl-c">&lt;!--</span>
+<span class="pl-c">    don't forget to add [assembly: log4net.Config.XmlConfigurator()] to AssemblyInfo.cs</span>
+<span class="pl-c">    --&gt;</span>
+    &lt;<span class="pl-ent">add</span> <span class="pl-e">key</span>=<span class="pl-s"><span class="pl-pds">"</span>log4net.Config<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>log4net.config<span class="pl-pds">"</span></span>/&gt;
+    &lt;<span class="pl-ent">add</span> <span class="pl-e">key</span>=<span class="pl-s"><span class="pl-pds">"</span>log4net.Config.Watch<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>True<span class="pl-pds">"</span></span>/&gt;
+  &lt;/<span class="pl-ent">appSettings</span>&gt;
+
+&lt;/<span class="pl-ent">configuration</span>&gt;</pre></div>
+
+<h2>
+<a id="example-log4net-configuration-file" class="anchor" href="#example-log4net-configuration-file" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example Log4Net Configuration file</h2>
+
+<p>Please use the <a href="https://github.com/Azure/azure-iot-sdks/blob/master/tools/DeviceExplorer/readme.md">Device Explorer</a> to create your own deviceId and deviceKey.
+This configuration is also available as a <a href="https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/log4net.config">log4net.config</a>:</p>
+
+<div class="highlight highlight-text-xml"><pre>&lt;?<span class="pl-ent">xml</span><span class="pl-e"> version</span>=<span class="pl-s"><span class="pl-pds">"</span>1.0<span class="pl-pds">"</span></span><span class="pl-e"> encoding</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> ?&gt;
+&lt;<span class="pl-ent">log4net</span>&gt;
+
+  &lt;<span class="pl-ent">appender</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>Log4IoTHubAppender<span class="pl-pds">"</span></span>
+               <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>Log4IoTHub.Log4IoTHubAppender, Log4IoTHub<span class="pl-pds">"</span></span>&gt;
+
+    <span class="pl-c">&lt;!--mandatory id of the Azure IoT Hub device --&gt;</span>
+    &lt;<span class="pl-ent">deviceId</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>YOUR_DEVICE_ID<span class="pl-pds">"</span></span> /&gt;
+    <span class="pl-c">&lt;!--mandatory primary key of the Azure IoT Hub device --&gt;</span>
+    &lt;<span class="pl-ent">deviceKey</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>YOUR_DEVICE_KEY<span class="pl-pds">"</span></span> /&gt;
+    <span class="pl-c">&lt;!--optional Azure REST API version --&gt;</span>
+    &lt;<span class="pl-ent">azureApiVersion</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>2015-08-15-preview<span class="pl-pds">"</span></span> /&gt;
+    <span class="pl-c">&lt;!--mandatory Azure IoT Hub hostname/dns --&gt;</span>
+    &lt;<span class="pl-ent">iotHubName</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>YOUR_IOT_HUB.azure-devices.net<span class="pl-pds">"</span></span> /&gt;
+
+    <span class="pl-c">&lt;!--optional meta data which should be logged to the IoT Hub--&gt;</span>
+    <span class="pl-c">&lt;!--&lt;metaDataJson value="{MetadataVersion:'1.0',Product:'dave',ProductVersion:'2016.1',Lifecycle:'prod',Licence:'full',Customer:'core',Component:'core'}" /&gt;--&gt;</span>
+
+    <span class="pl-c">&lt;!-- </span>
+<span class="pl-c">    optional debug setting which should only be used during development or on testsystem.</span>
+<span class="pl-c">    Set logMessageToFile=true to inspect your messages (in log4IoTHub_info.log) which will </span>
+<span class="pl-c">    be sent to the Azure IoT Hub.</span>
+<span class="pl-c">    --&gt;</span>
+    <span class="pl-c">&lt;!--&lt;logMessageToFile value="true"/&gt;--&gt;</span>
+
+    <span class="pl-c">&lt;!-- </span>
+<span class="pl-c">    optional name of an logger defined further down with an depending appender e.g. </span>
+<span class="pl-c">    logentries to log internal errors. If the value is empty or the property isn't defined </span>
+<span class="pl-c">    errors will only be logged to log4IoTHub_error.log</span>
+<span class="pl-c">    --&gt;</span>
+    <span class="pl-c">&lt;!--&lt;errLoggerName value="Log4IoTHubErrors2LogentriesLogger"/&gt;--&gt;</span>
+
+    <span class="pl-c">&lt;!-- optional proxy settings</span>
+<span class="pl-c">    &lt;webProxyHost value="YOUR_PROXY_HOST_IF_REQUIRED" /&gt;</span>
+<span class="pl-c">    &lt;webProxyPort value="YOUR_PROXY_PORT_IF_REQUIRED" /&gt;</span>
+<span class="pl-c">    --&gt;</span>
+  &lt;/<span class="pl-ent">appender</span>&gt;
+
+
+  <span class="pl-c">&lt;!--</span>
+<span class="pl-c">  &lt;appender name="LeAppender" type="log4net.Appender.LogentriesAppender, LogentriesLog4net"&gt;</span>
+<span class="pl-c">    &lt;immediateFlush value="true" /&gt;</span>
+<span class="pl-c">    &lt;useSsl value="true" /&gt;</span>
+<span class="pl-c">    &lt;token value="YOUR_LOGENTRIES_TOKEN" /&gt;</span>
+<span class="pl-c">    &lt;layout type="log4net.Layout.PatternLayout"&gt;</span>
+<span class="pl-c">      &lt;param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.fff zzz};loglevel=%level%;operation=%m;" /&gt;</span>
+<span class="pl-c">    &lt;/layout&gt;</span>
+<span class="pl-c">    &lt;filter type="log4net.Filter.LevelRangeFilter"&gt;</span>
+<span class="pl-c">      &lt;levelMin value="INFO" /&gt;</span>
+<span class="pl-c">      &lt;levelMax value="FATAL" /&gt;</span>
+<span class="pl-c">    &lt;/filter&gt;</span>
+<span class="pl-c">  &lt;/appender&gt;</span>
+<span class="pl-c"></span>
+<span class="pl-c">  &lt;logger name="Log4IoTHubErrors2LogentriesLogger" additivity="false"&gt;</span>
+<span class="pl-c">    &lt;level value="ALL" /&gt;</span>
+<span class="pl-c">    &lt;appender-ref ref="LeAppender" /&gt;</span>
+<span class="pl-c">  &lt;/logger&gt;</span>
+<span class="pl-c">  --&gt;</span>
+
+  &lt;<span class="pl-ent">logger</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>Log4IoTHubLogger<span class="pl-pds">"</span></span> <span class="pl-e">additivity</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>&gt;
+    &lt;<span class="pl-ent">appender-ref</span> <span class="pl-e">ref</span>=<span class="pl-s"><span class="pl-pds">"</span>Log4IoTHubAppender<span class="pl-pds">"</span></span> /&gt;
+  &lt;/<span class="pl-ent">logger</span>&gt;
+
+&lt;/<span class="pl-ent">log4net</span>&gt;</pre></div>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Log4iothub maintained by <a href="https://github.com/ptv-logistics">ptv-logistics</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
