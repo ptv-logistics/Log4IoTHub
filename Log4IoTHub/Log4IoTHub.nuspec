@@ -9,7 +9,7 @@
 	<projectUrl>https://github.com/ptv-logistics/Log4IoTHub</projectUrl>
 	<licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Azure IoT Hub appender for log4net... sending messages by HttpWebRequest to avoid Service Bus SDK dependencies</description>
+    <description>Log4Net appender for Azure IoT Hub... sending messages by HttpWebRequest to avoid Service Bus SDK dependencies</description>
     <copyright>Copyright © 2016 PTV Group</copyright>
     <dependencies>
       <dependency id="log4net" version="2.0.5" />
