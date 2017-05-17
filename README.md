@@ -64,7 +64,7 @@ This configuration is also available as a [App.config](https://github.com/ptv-lo
 
 ## Example Log4Net Configuration file
 
-Please use the [Device Explorer](https://github.com/Azure/azure-iot-sdks/blob/master/tools/DeviceExplorer/readme.md) to create your own deviceId and deviceKey.
+Please use the [Device Explorer](https://github.com/Azure/azure-iot-sdk-csharp/tree/master/tools/DeviceExplorer) to create your own deviceId and deviceKey.
 This configuration is also available as a [log4net.config](https://github.com/ptv-logistics/Log4IoTHub/blob/master/Log4IoTHubTest/log4net.config):
 
 
